@@ -21,7 +21,8 @@ class MultiIDCoach(BaseCoach):
 
         w_path_dir = f'{paths_config.embedding_base_dir}/{paths_config.input_data_id}'
         os.makedirs(w_path_dir, exist_ok=True)
-        os.makedirs(f'{w_path_dir}/{paths_config.pti_results_keyword}', exist_ok=True)
+        os.makedirs(
+            f'{w_path_dir}/{paths_config.pti_results_keyword}', exist_ok=True)
 
         use_ball_holder = True
         w_pivots = []
@@ -56,7 +57,7 @@ class MultiIDCoach(BaseCoach):
 
                 generated_images = self.forward(w_pivot)
                 loss, l2_loss_val, loss_lpips = self.calc_loss(generated_images, real_images_batch, image_name,
-                                      self.G, use_ball_holder, w_pivot)
+                                                               self.G, use_ball_holder, w_pivot)
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -75,5 +76,5 @@ class MultiIDCoach(BaseCoach):
         snapshot_data = dict()
         snapshot_data['G_ema'] = self.G
         import pickle
-        with open(f'{paths_config.checkpoints_dir}/model_{global_config.run_name}_multi_id.pkl', 'wb') as f: 
-                pickle.dump(snapshot_data, f)
+        with open(f'{paths_config.checkpoints_dir}/model_{global_config.run_name}_multi_id.pkl', 'wb') as f:
+            pickle.dump(snapshot_data, f)

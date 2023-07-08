@@ -113,7 +113,6 @@ class Predictor:
         output = output_handle.copy_to_cpu()
         return self.postprocess(output, img, ori_shapes[0], bg)
 
-
     def postprocess(self, pred, img, ori_shape, bg):
         if not os.path.exists(self.args.save_dir):
             os.makedirs(self.args.save_dir)
@@ -125,8 +124,8 @@ class Predictor:
                 score_map = 255 * score_map
                 cur_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 cur_gray = cv2.resize(cur_gray, (resize_w, resize_h))
-                optflow_map = optic_flow_process(cur_gray, score_map, self.prev_gray, self.prev_cfd, \
-                        self.disflow, self.is_init)
+                optflow_map = optic_flow_process(cur_gray, score_map, self.prev_gray, self.prev_cfd,
+                                                 self.disflow, self.is_init)
                 self.prev_gray = cur_gray.copy()
                 self.prev_cfd = optflow_map.copy()
                 self.is_init = False

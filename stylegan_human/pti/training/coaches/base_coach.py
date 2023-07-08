@@ -33,7 +33,8 @@ class BaseCoach:
             transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
         # Initialize loss
-        self.lpips_loss = LPIPS(net=hyperparameters.lpips_type).to(global_config.device).eval()
+        self.lpips_loss = LPIPS(net=hyperparameters.lpips_type).to(
+            global_config.device).eval()
 
         self.restart_training()
 
@@ -49,7 +50,8 @@ class BaseCoach:
 
         self.original_G = load_old_G()
 
-        self.space_regulizer = Space_Regulizer(self.original_G, self.lpips_loss)
+        self.space_regulizer = Space_Regulizer(
+            self.original_G, self.lpips_loss)
         self.optimizer = self.configure_optimizers()
 
     def get_inversion(self, w_path_dir, image_name, image):
@@ -87,7 +89,8 @@ class BaseCoach:
             w = self.get_e4e_inversion(image)
 
         else:
-            id_image = torch.squeeze((image.to(global_config.device) + 1) / 2) * 255
+            id_image = torch.squeeze(
+                (image.to(global_config.device) + 1) / 2) * 255
             w = w_projector.project(self.G, id_image, device=torch.device(global_config.device), w_avg_samples=600,
                                     num_steps=hyperparameters.first_inv_steps, w_name=image_name,
                                     use_wandb=self.use_wandb)
@@ -99,7 +102,8 @@ class BaseCoach:
         pass
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.G.parameters(), lr=hyperparameters.pti_learning_rate)
+        optimizer = torch.optim.Adam(
+            self.G.parameters(), lr=hyperparameters.pti_learning_rate)
 
         return optimizer
 
@@ -109,23 +113,27 @@ class BaseCoach:
         if hyperparameters.pt_l2_lambda > 0:
             l2_loss_val = l2_loss(generated_images, real_images)
             if self.use_wandb:
-                wandb.log({f'MSE_loss_val_{log_name}': l2_loss_val.detach().cpu()}, step=global_config.training_step)
+                wandb.log({f'MSE_loss_val_{log_name}': l2_loss_val.detach(
+                ).cpu()}, step=global_config.training_step)
             loss += l2_loss_val * hyperparameters.pt_l2_lambda
         if hyperparameters.pt_lpips_lambda > 0:
             loss_lpips = self.lpips_loss(generated_images, real_images)
             loss_lpips = torch.squeeze(loss_lpips)
             if self.use_wandb:
-                wandb.log({f'LPIPS_loss_val_{log_name}': loss_lpips.detach().cpu()}, step=global_config.training_step)
+                wandb.log({f'LPIPS_loss_val_{log_name}': loss_lpips.detach(
+                ).cpu()}, step=global_config.training_step)
             loss += loss_lpips * hyperparameters.pt_lpips_lambda
 
         if use_ball_holder and hyperparameters.use_locality_regularization:
-            ball_holder_loss_val = self.space_regulizer.space_regulizer_loss(new_G, w_batch, use_wandb=self.use_wandb)
+            ball_holder_loss_val = self.space_regulizer.space_regulizer_loss(
+                new_G, w_batch, use_wandb=self.use_wandb)
             loss += ball_holder_loss_val
 
         return loss, l2_loss_val, loss_lpips
 
     def forward(self, w):
-        generated_images = self.G.synthesis(w, noise_mode='const', force_fp32=True)
+        generated_images = self.G.synthesis(
+            w, noise_mode='const', force_fp32=True)
 
         return generated_images
 
@@ -137,7 +145,8 @@ class BaseCoach:
         opts = Namespace(**opts)
         self.e4e_inversion_net = pSp(opts)
         self.e4e_inversion_net.eval()
-        self.e4e_inversion_net = self.e4e_inversion_net.to(global_config.device)
+        self.e4e_inversion_net = self.e4e_inversion_net.to(
+            global_config.device)
         toogle_grad(self.e4e_inversion_net, False)
 
     def get_e4e_inversion(self, image):

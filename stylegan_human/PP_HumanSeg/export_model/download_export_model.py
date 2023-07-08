@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from paddleseg.utils.download import download_file_and_uncompress
 import sys
 import os
 
@@ -20,7 +21,6 @@ LOCAL_PATH = os.path.dirname(os.path.abspath(__file__))
 TEST_PATH = os.path.join(LOCAL_PATH, "../../../", "test")
 sys.path.append(TEST_PATH)
 
-from paddleseg.utils.download import download_file_and_uncompress
 
 model_urls = {
     "pphumanseg_lite_portrait_398x224_with_softmax":

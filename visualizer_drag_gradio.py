@@ -1,7 +1,13 @@
+# https://huggingface.co/DragGan/DragGan-Models
+# https://arxiv.org/abs/2305.10973
 import os
 import os.path as osp
 from argparse import ArgumentParser
 from functools import partial
+from pathlib import Path
+import time
+
+import psutil
 
 import gradio as gr
 import numpy as np
@@ -14,14 +20,19 @@ from gradio_utils import (ImageMask, draw_mask_on_image, draw_points_on_image,
                           on_change_single_global_state)
 from viz.renderer import Renderer, add_watermark_np
 
-parser = ArgumentParser()
-parser.add_argument('--share', action='store_true')
-parser.add_argument('--cache-dir', type=str, default='./checkpoints')
-args = parser.parse_args()
 
-cache_dir = args.cache_dir
+# download models from Hugging Face hub
+from huggingface_hub import snapshot_download
+
+model_dir = Path('./checkpoints')
+snapshot_download('DragGan/DragGan-Models',
+                  repo_type='model', local_dir=model_dir)
+
+cache_dir = model_dir
 
 device = 'cuda'
+IS_SPACE = "DragGan/DragGan" in os.environ.get('SPACE_ID', '')
+TIMEOUT = 80
 
 
 def reverse_point_pairs(points):
@@ -146,19 +157,54 @@ def preprocess_mask_info(global_state, image):
     return global_state
 
 
+def print_memory_usage():
+    # Print system memory usage
+    print(f"System memory usage: {psutil.virtual_memory().percent}%")
+
+    # Print GPU memory usage
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"GPU memory usage: {torch.cuda.memory_allocated() / 1e9} GB")
+        print(
+            f"Max GPU memory usage: {torch.cuda.max_memory_allocated() / 1e9} GB")
+        device_properties = torch.cuda.get_device_properties(device)
+        available_memory = device_properties.total_memory - \
+            torch.cuda.max_memory_allocated()
+        print(f"Available GPU memory: {available_memory / 1e9} GB")
+    else:
+        print("No GPU available")
+
+
+# filter large models running on SPACES
+allowed_checkpoints = []  # all checkpoints
+if IS_SPACE:
+    allowed_checkpoints = ["stylegan_human_v2_512.pkl",
+                           "stylegan2_dogs_1024_pytorch.pkl"]
+
 valid_checkpoints_dict = {
-    f.split('/')[-1].split('.')[0]: osp.join(cache_dir, f)
-    for f in os.listdir(cache_dir)
-    if (f.endswith('pkl') and osp.exists(osp.join(cache_dir, f)))
+    f.name.split('.')[0]: str(f)
+    for f in Path(cache_dir).glob('*.pkl')
+    if f.name in allowed_checkpoints or not IS_SPACE
 }
-print(f'File under cache_dir ({cache_dir}):')
-print(os.listdir(cache_dir))
 print('Valid checkpoint file:')
 print(valid_checkpoints_dict)
 
 init_pkl = 'stylegan_human_v2_512'
 
 with gr.Blocks() as app:
+    gr.Markdown("""
+# DragGAN - Drag Your GAN
+## Interactive Point-based Manipulation on the Generative Image Manifold
+### Unofficial Gradio Demo
+
+**Due to high demand, only one model can be run at a time, or you can duplicate the space and run your own copy.**
+
+<a href="https://huggingface.co/spaces/radames/DragGan?duplicate=true" style="display: inline-block;margin-top: .5em;margin-right: .25em;" target="_blank">
+<img style="margin-bottom: 0em;display: inline;margin-top: -.25em;" src="https://bit.ly/3gLdBN6" alt="Duplicate Space"></a> for no queue on your own hardware.</p>
+
+* Official Repo: [XingangPan](https://github.com/XingangPan/DragGAN)
+* Gradio Demo by: [LeoXing1996](https://github.com/LeoXing1996) © [OpenMMLab MMagic](https://github.com/open-mmlab/mmagic)
+""")
 
     # renderer = Renderer()
     global_state = gr.State({
@@ -176,7 +222,7 @@ with gr.Blocks() as app:
         'show_mask': True,  # add button
         "generator_params": dnnlib.EasyDict(),
         "params": {
-            "seed": 0,
+            "seed": int(np.random.randint(0, 2**32 - 1)),
             "motion_lambda": 20,
             "r1_in_pixels": 3,
             "r2_in_pixels": 12,
@@ -198,7 +244,6 @@ with gr.Blocks() as app:
 
     # init image
     global_state = init_images(global_state)
-
     with gr.Row():
 
         with gr.Row():
@@ -225,9 +270,13 @@ with gr.Blocks() as app:
                         gr.Markdown(value='Latent', show_label=False)
 
                     with gr.Column(scale=4, min_width=10):
-                        form_seed_number = gr.Number(
+                        form_seed_number = gr.Slider(
+                            mininium=0,
+                            maximum=2**32-1,
+                            step=1,
                             value=global_state.value['params']['seed'],
                             interactive=True,
+                            # randomize=True,
                             label="Seed",
                         )
                         form_lr_number = gr.Number(
@@ -323,6 +372,8 @@ with gr.Blocks() as app:
           mask (this has the same effect as `Reset Image` button).
         3. Click `Edit Flexible Area` to create a mask and constrain the
            unmasked region to remain unchanged.
+
+        
         """)
     gr.HTML("""
         <style>
@@ -340,8 +391,8 @@ with gr.Blocks() as app:
         <a href="https://github.com/open-mmlab/mmagic">OpenMMLab MMagic</a>
         </div>
         """)
-
     # Network & latents tab listeners
+
     def on_change_pretrained_dropdown(pretrained_value, global_state):
         """Function to handle model change.
         1. Set pretrained value to global_state
@@ -358,6 +409,7 @@ with gr.Blocks() as app:
         on_change_pretrained_dropdown,
         inputs=[form_pretrained_dropdown, global_state],
         outputs=[global_state, form_image],
+        queue=True,
     )
 
     def on_click_reset_image(global_state):
@@ -375,6 +427,7 @@ with gr.Blocks() as app:
         on_click_reset_image,
         inputs=[global_state],
         outputs=[global_state, form_image],
+        queue=False,
     )
 
     # Update parameters
@@ -436,6 +489,7 @@ with gr.Blocks() as app:
         on_change_lr,
         inputs=[form_lr_number, global_state],
         outputs=[global_state],
+        queue=False,
     )
 
     def on_click_start(global_state, image):
@@ -516,8 +570,15 @@ with gr.Blocks() as app:
             print(f'    Source: {p_in_pixels}')
             print(f'    Target: {t_in_pixels}')
             step_idx = 0
+            last_time = time.time()
             while True:
-                if global_state["temporal_params"]["stop"]:
+                print_memory_usage()
+                # add a TIMEOUT break
+                print(f'Running time: {time.time() - last_time}')
+                if IS_SPACE and time.time() - last_time > TIMEOUT:
+                    print('Timeout break!')
+                    break
+                if global_state["temporal_params"]["stop"] or global_state['generator_params']["stop"]:
                     break
 
                 # do drage here!
@@ -675,7 +736,8 @@ with gr.Blocks() as app:
 
     form_stop_btn.click(on_click_stop,
                         inputs=[global_state],
-                        outputs=[global_state, form_stop_btn])
+                        outputs=[global_state, form_stop_btn],
+                        queue=False)
 
     form_draw_interval_number.change(
         partial(
@@ -685,6 +747,7 @@ with gr.Blocks() as app:
         ),
         inputs=[form_draw_interval_number, global_state],
         outputs=[global_state],
+        queue=False,
     )
 
     def on_click_remove_point(global_state):
@@ -758,7 +821,8 @@ with gr.Blocks() as app:
                           outputs=[
                               global_state,
                               form_image,
-                          ])
+                          ],
+                          queue=False)
 
     def on_click_add_point(global_state, image: dict):
         """Function switch from add mask mode to add points mode.
@@ -779,7 +843,8 @@ with gr.Blocks() as app:
 
     enable_add_points.click(on_click_add_point,
                             inputs=[global_state, form_image],
-                            outputs=[global_state, form_image])
+                            outputs=[global_state, form_image],
+                            queue=False)
 
     def on_click_image(global_state, evt: gr.SelectData):
         """This function only support click for point selection
@@ -819,6 +884,7 @@ with gr.Blocks() as app:
         on_click_image,
         inputs=[global_state],
         outputs=[global_state, form_image],
+        queue=False,
     )
 
     def on_click_clear_points(global_state):
@@ -839,7 +905,8 @@ with gr.Blocks() as app:
 
     undo_points.click(on_click_clear_points,
                       inputs=[global_state],
-                      outputs=[global_state, form_image])
+                      outputs=[global_state, form_image],
+                      queue=False)
 
     def on_click_show_mask(global_state, show_mask):
         """Function to control whether show mask on image."""
@@ -859,8 +926,9 @@ with gr.Blocks() as app:
         on_click_show_mask,
         inputs=[global_state, show_mask],
         outputs=[global_state, form_image],
+        queue=False,
     )
 
 gr.close_all()
-app.queue(concurrency_count=5, max_size=20)
-app.launch(share=args.share)
+app.queue(concurrency_count=1, max_size=200, api_open=False)
+app.launch(show_api=False)

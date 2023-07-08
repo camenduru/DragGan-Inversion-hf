@@ -24,15 +24,16 @@ import uuid
 import types
 import dnnlib
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
-_version            = 6         # internal version number
-_decorators         = set()     # {decorator_class, ...}
-_import_hooks       = []        # [hook_function, ...]
+_version = 6         # internal version number
+_decorators = set()     # {decorator_class, ...}
+_import_hooks = []        # [hook_function, ...]
 _module_to_src_dict = dict()    # {module: src, ...}
 _src_to_module_dict = dict()    # {src: module, ...}
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
 
 def persistent_class(orig_class):
     r"""Class decorator that extends a given class to save its source code
@@ -121,17 +122,19 @@ def persistent_class(orig_class):
             fields = list(super().__reduce__())
             fields += [None] * max(3 - len(fields), 0)
             if fields[0] is not _reconstruct_persistent_obj:
-                meta = dict(type='class', version=_version, module_src=self._orig_module_src, class_name=self._orig_class_name, state=fields[2])
-                fields[0] = _reconstruct_persistent_obj # reconstruct func
-                fields[1] = (meta,) # reconstruct args
-                fields[2] = None # state dict
+                meta = dict(type='class', version=_version, module_src=self._orig_module_src,
+                            class_name=self._orig_class_name, state=fields[2])
+                fields[0] = _reconstruct_persistent_obj  # reconstruct func
+                fields[1] = (meta,)  # reconstruct args
+                fields[2] = None  # state dict
             return tuple(fields)
 
     Decorator.__name__ = orig_class.__name__
     _decorators.add(Decorator)
     return Decorator
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
 
 def is_persistent(obj):
     r"""Test whether the given object or class is persistent, i.e.,
@@ -142,9 +145,10 @@ def is_persistent(obj):
             return True
     except TypeError:
         pass
-    return type(obj) in _decorators # pylint: disable=unidiomatic-typecheck
+    return type(obj) in _decorators  # pylint: disable=unidiomatic-typecheck
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
 
 def import_hook(hook):
     r"""Register an import hook that is called whenever a persistent object
@@ -176,7 +180,8 @@ def import_hook(hook):
     assert callable(hook)
     _import_hooks.append(hook)
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
 
 def _reconstruct_persistent_obj(meta):
     r"""Hook that is called internally by the `pickle` module to unpickle
@@ -198,12 +203,13 @@ def _reconstruct_persistent_obj(meta):
 
     setstate = getattr(obj, '__setstate__', None)
     if callable(setstate):
-        setstate(meta.state) # pylint: disable=not-callable
+        setstate(meta.state)  # pylint: disable=not-callable
     else:
         obj.__dict__.update(meta.state)
     return obj
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
 
 def _module_to_src(module):
     r"""Query the source code of a given Python module.
@@ -215,6 +221,7 @@ def _module_to_src(module):
         _src_to_module_dict[src] = module
     return src
 
+
 def _src_to_module(src):
     r"""Get or create a Python module for the given source code.
     """
@@ -225,10 +232,11 @@ def _src_to_module(src):
         sys.modules[module_name] = module
         _module_to_src_dict[module] = src
         _src_to_module_dict[src] = module
-        exec(src, module.__dict__) # pylint: disable=exec-used
+        exec(src, module.__dict__)  # pylint: disable=exec-used
     return module
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
 
 def _check_pickleable(obj):
     r"""Check that the given object is pickleable, raising an exception if
@@ -241,13 +249,14 @@ def _check_pickleable(obj):
         if isinstance(obj, dict):
             return [[recurse(x), recurse(y)] for x, y in obj.items()]
         if isinstance(obj, (str, int, float, bool, bytes, bytearray)):
-            return None # Python primitive types are pickleable.
+            return None  # Python primitive types are pickleable.
         if f'{type(obj).__module__}.{type(obj).__name__}' in ['numpy.ndarray', 'torch.Tensor']:
-            return None # NumPy arrays and PyTorch tensors are pickleable.
+            return None  # NumPy arrays and PyTorch tensors are pickleable.
         if is_persistent(obj):
-            return None # Persistent objects are pickleable, by virtue of the constructor check.
+            # Persistent objects are pickleable, by virtue of the constructor check.
+            return None
         return obj
     with io.BytesIO() as f:
         pickle.dump(recurse(obj), f)
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------

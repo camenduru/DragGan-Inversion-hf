@@ -5,29 +5,31 @@ import imgui
 import dnnlib
 from gui_utils import imgui_utils
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
 
 class DragWidget:
     def __init__(self, viz):
-        self.viz            = viz
-        self.point          = [-1, -1]
-        self.points         = []
-        self.targets        = []
-        self.is_point       = True
-        self.last_click     = False
-        self.is_drag        = False
-        self.iteration      = 0
-        self.mode           = 'point'
-        self.r_mask         = 50
-        self.show_mask      = False
-        self.mask           = torch.ones(256, 256)
-        self.lambda_mask    = 20
-        self.feature_idx    = 5
-        self.r1             = 3
-        self.r2             = 12
-        self.path           = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '_screenshots'))
-        self.defer_frames   = 0
-        self.disabled_time  = 0
+        self.viz = viz
+        self.point = [-1, -1]
+        self.points = []
+        self.targets = []
+        self.is_point = True
+        self.last_click = False
+        self.is_drag = False
+        self.iteration = 0
+        self.mode = 'point'
+        self.r_mask = 50
+        self.show_mask = False
+        self.mask = torch.ones(256, 256)
+        self.lambda_mask = 20
+        self.feature_idx = 5
+        self.r1 = 3
+        self.r2 = 12
+        self.path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', '_screenshots'))
+        self.defer_frames = 0
+        self.disabled_time = 0
 
     def action(self, click, down, x, y):
         if self.mode == 'point':
@@ -90,6 +92,7 @@ class DragWidget:
     @imgui_utils.scoped_by_object_id
     def __call__(self, show=True):
         viz = self.viz
+        reset = False
         if show:
             with imgui_utils.grayed_out(self.disabled_time != 0):
                 imgui.text('Drag')
@@ -118,34 +121,37 @@ class DragWidget:
                 imgui.text(' ')
                 imgui.same_line(viz.label_w)
                 imgui.text(f'Steps: {self.iteration}')
-                
+
                 imgui.text('Mask')
                 imgui.same_line(viz.label_w)
                 if imgui_utils.button('Flexible area', width=viz.button_w, enabled='image' in viz.result):
                     self.mode = 'flexible'
                     self.show_mask = True
-                
+
                 imgui.same_line()
                 if imgui_utils.button('Fixed area', width=viz.button_w, enabled='image' in viz.result):
                     self.mode = 'fixed'
                     self.show_mask = True
-                
+
                 imgui.text(' ')
                 imgui.same_line(viz.label_w)
                 if imgui_utils.button('Reset mask', width=viz.button_w, enabled='image' in viz.result):
                     self.mask = torch.ones(self.height, self.width)
                 imgui.same_line()
-                _clicked, self.show_mask = imgui.checkbox('Show mask', self.show_mask)
+                _clicked, self.show_mask = imgui.checkbox(
+                    'Show mask', self.show_mask)
 
                 imgui.text(' ')
                 imgui.same_line(viz.label_w)
                 with imgui_utils.item_width(viz.font_size * 6):
-                    changed, self.r_mask = imgui.input_int('Radius', self.r_mask)
+                    changed, self.r_mask = imgui.input_int(
+                        'Radius', self.r_mask)
 
                 imgui.text(' ')
                 imgui.same_line(viz.label_w)
                 with imgui_utils.item_width(viz.font_size * 6):
-                    changed, self.lambda_mask = imgui.input_int('Lambda', self.lambda_mask)
+                    changed, self.lambda_mask = imgui.input_int(
+                        'Lambda', self.lambda_mask)
 
         self.disabled_time = max(self.disabled_time - viz.frame_delta, 0)
         if self.defer_frames > 0:
@@ -164,4 +170,4 @@ class DragWidget:
         viz.args.reset = reset
 
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------

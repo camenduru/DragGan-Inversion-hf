@@ -58,7 +58,8 @@ class GradualStyleBlock(Module):
 class GradualStyleEncoder(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
         super(GradualStyleEncoder, self).__init__()
-        assert num_layers in [50, 100, 152], 'num_layers should be 50,100, or 152'
+        assert num_layers in [
+            50, 100, 152], 'num_layers should be 50,100, or 152'
         assert mode in ['ir', 'ir_se'], 'mode should be ir or ir_se'
         blocks = get_blocks(num_layers)
         if mode == 'ir':
@@ -89,8 +90,10 @@ class GradualStyleEncoder(Module):
             else:
                 style = GradualStyleBlock(512, 512, 64)
             self.styles.append(style)
-        self.latlayer1 = nn.Conv2d(256, 512, kernel_size=1, stride=1, padding=0)
-        self.latlayer2 = nn.Conv2d(128, 512, kernel_size=1, stride=1, padding=0)
+        self.latlayer1 = nn.Conv2d(
+            256, 512, kernel_size=1, stride=1, padding=0)
+        self.latlayer2 = nn.Conv2d(
+            128, 512, kernel_size=1, stride=1, padding=0)
 
     def forward(self, x):
         x = self.input_layer(x)
@@ -124,7 +127,8 @@ class GradualStyleEncoder(Module):
 class Encoder4Editing(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
         super(Encoder4Editing, self).__init__()
-        assert num_layers in [50, 100, 152], 'num_layers should be 50,100, or 152'
+        assert num_layers in [
+            50, 100, 152], 'num_layers should be 50,100, or 152'
         assert mode in ['ir', 'ir_se'], 'mode should be ir or ir_se'
         blocks = get_blocks(num_layers)
         if mode == 'ir':
@@ -157,8 +161,10 @@ class Encoder4Editing(Module):
                 style = GradualStyleBlock(512, 512, 64)
             self.styles.append(style)
 
-        self.latlayer1 = nn.Conv2d(256, 512, kernel_size=1, stride=1, padding=0)
-        self.latlayer2 = nn.Conv2d(128, 512, kernel_size=1, stride=1, padding=0)
+        self.latlayer1 = nn.Conv2d(
+            256, 512, kernel_size=1, stride=1, padding=0)
+        self.latlayer2 = nn.Conv2d(
+            128, 512, kernel_size=1, stride=1, padding=0)
 
         self.progressive_stage = ProgressiveStage.Inference
 
@@ -190,10 +196,12 @@ class Encoder4Editing(Module):
         features = c3
         for i in range(1, min(stage + 1, self.style_count)):  # Infer additional deltas
             if i == self.coarse_ind:
-                p2 = _upsample_add(c3, self.latlayer1(c2))  # FPN's middle features
+                # FPN's middle features
+                p2 = _upsample_add(c3, self.latlayer1(c2))
                 features = p2
             elif i == self.middle_ind:
-                p1 = _upsample_add(p2, self.latlayer2(c1))  # FPN's fine features
+                # FPN's fine features
+                p1 = _upsample_add(p2, self.latlayer2(c1))
                 features = p1
             delta_i = self.styles[i](features)
             w[:, i] += delta_i

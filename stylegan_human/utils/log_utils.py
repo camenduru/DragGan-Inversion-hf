@@ -32,7 +32,8 @@ def plot_image_from_w(w, G):
 
 
 def plot_image(img):
-    img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8).detach().cpu().numpy()
+    img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0,
+                                                        255).to(torch.uint8).detach().cpu().numpy()
     pillow_image = Image.fromarray(img[0])
     plt.imshow(pillow_image)
     plt.show()
@@ -78,5 +79,6 @@ def get_image_from_w(w, G):
         w = w.unsqueeze(0)
     with torch.no_grad():
         img = G.synthesis(w, noise_mode='const')
-        img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8).detach().cpu().numpy()
+        img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0,
+                                                            255).to(torch.uint8).detach().cpu().numpy()
     return img[0]

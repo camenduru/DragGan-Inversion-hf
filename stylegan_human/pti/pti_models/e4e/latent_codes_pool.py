@@ -33,10 +33,12 @@ class LatentCodesPool:
         for w in ws:  # ws.shape: (batch, 512) or (batch, n_latent, 512)
             # w = torch.unsqueeze(image.data, 0)
             if w.ndim == 2:
-                i = random.randint(0, len(w) - 1)  # apply a random latent index as a candidate
+                # apply a random latent index as a candidate
+                i = random.randint(0, len(w) - 1)
                 w = w[i]
             self.handle_w(w, return_ws)
-        return_ws = torch.stack(return_ws, 0)   # collect all the images and return
+        # collect all the images and return
+        return_ws = torch.stack(return_ws, 0)
         return return_ws
 
     def handle_w(self, w, return_ws):
@@ -47,7 +49,8 @@ class LatentCodesPool:
         else:
             p = random.uniform(0, 1)
             if p > 0.5:  # by 50% chance, the buffer will return a previously stored latent code, and insert the current code into the buffer
-                random_id = random.randint(0, self.pool_size - 1)  # randint is inclusive
+                random_id = random.randint(
+                    0, self.pool_size - 1)  # randint is inclusive
                 tmp = self.ws[random_id].clone()
                 self.ws[random_id] = w
                 return_ws.append(tmp)

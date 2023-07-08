@@ -9,7 +9,6 @@ from torch.autograd import Function
 module_path = os.path.dirname(__file__)
 
 
-
 class FusedLeakyReLU(nn.Module):
     def __init__(self, channel, negative_slope=0.2, scale=2 ** 0.5):
         super().__init__()
@@ -31,4 +30,3 @@ def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2 ** 0.5):
         )
         * scale
     )
-

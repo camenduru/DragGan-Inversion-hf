@@ -1,16 +1,17 @@
+from pti.pti_models.e4e.stylegan2.model import Generator
+from pti.pti_models.e4e.encoders import psp_encoders
+from torch import nn
+import torch
 import matplotlib
 from pti.pti_configs import paths_config
 matplotlib.use('Agg')
-import torch
-from torch import nn
-from pti.pti_models.e4e.encoders import psp_encoders
-from pti.pti_models.e4e.stylegan2.model import Generator
 
 
 def get_keys(d, name):
     if 'state_dict' in d:
         d = d['state_dict']
-    d_filt = {k[len(name) + 1:]: v for k, v in d.items() if k[:len(name)] == name}
+    d_filt = {k[len(name) + 1:]: v for k, v in d.items()
+              if k[:len(name)] == name}
     return d_filt
 
 
@@ -21,7 +22,8 @@ class pSp(nn.Module):
         self.opts = opts
         # Define architecture
         self.encoder = self.set_encoder()
-        self.decoder = Generator(opts.stylegan_size, 512, 8, channel_multiplier=2)
+        self.decoder = Generator(
+            opts.stylegan_size, 512, 8, channel_multiplier=2)
         self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256 // 2))
         # Load weights if needed
         self.load_weights()
@@ -32,17 +34,22 @@ class pSp(nn.Module):
         elif self.opts.encoder_type == 'Encoder4Editing':
             encoder = psp_encoders.Encoder4Editing(50, 'ir_se', self.opts)
         elif self.opts.encoder_type == 'SingleStyleCodeEncoder':
-            encoder = psp_encoders.BackboneEncoderUsingLastLayerIntoW(50, 'ir_se', self.opts)
+            encoder = psp_encoders.BackboneEncoderUsingLastLayerIntoW(
+                50, 'ir_se', self.opts)
         else:
-            raise Exception('{} is not a valid encoders'.format(self.opts.encoder_type))
+            raise Exception('{} is not a valid encoders'.format(
+                self.opts.encoder_type))
         return encoder
 
     def load_weights(self):
         if self.opts.checkpoint_path is not None:
-            print('Loading e4e over the pSp framework from checkpoint: {}'.format(self.opts.checkpoint_path))
+            print('Loading e4e over the pSp framework from checkpoint: {}'.format(
+                self.opts.checkpoint_path))
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
-            self.encoder.load_state_dict(get_keys(ckpt, 'encoder'), strict=True)
-            self.decoder.load_state_dict(get_keys(ckpt, 'decoder'), strict=True)
+            self.encoder.load_state_dict(
+                get_keys(ckpt, 'encoder'), strict=True)
+            self.decoder.load_state_dict(
+                get_keys(ckpt, 'decoder'), strict=True)
             self.__load_latent_avg(ckpt)
         else:
             print('Loading encoders weights from irse50!')
@@ -62,15 +69,18 @@ class pSp(nn.Module):
             # normalize with respect to the center of an average face
             if self.opts.start_from_latent_avg:
                 if codes.ndim == 2:
-                    codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)[:, 0, :]
+                    codes = codes + \
+                        self.latent_avg.repeat(codes.shape[0], 1, 1)[:, 0, :]
                 else:
-                    codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
+                    codes = codes + \
+                        self.latent_avg.repeat(codes.shape[0], 1, 1)
 
         if latent_mask is not None:
             for i in latent_mask:
                 if inject_latent is not None:
                     if alpha is not None:
-                        codes[:, i] = alpha * inject_latent[:, i] + (1 - alpha) * codes[:, i]
+                        codes[:, i] = alpha * inject_latent[:, i] + \
+                            (1 - alpha) * codes[:, i]
                     else:
                         codes[:, i] = inject_latent[:, i]
                 else:

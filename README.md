@@ -1,16 +1,20 @@
 ---
-title: DragGan
-emoji: 👀
+title: DragGan - Drag Your GAN - Inversion
+emoji: 🔄🐉
 colorFrom: purple
 colorTo: pink
 sdk: gradio
-sdk_version: 3.35.2
-app_file: visualizer_drag_gradio.py
+python_version: 3.8.17
+sdk_version: 3.36.1
+app_file: visualizer_drag_gradio_inversion.py
 pinned: false
 ---
 
 
 # Drag Your GAN: Interactive Point-based Manipulation on the Generative Image Manifold
+
+https://arxiv.org/abs/2305.10973
+https://huggingface.co/DragGan/DragGan-Models
 
 <p align="center">
     <img src="DragGAN.gif", width="700">

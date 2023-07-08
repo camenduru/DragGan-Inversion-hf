@@ -8,6 +8,7 @@ from pti.training.coaches.base_coach import BaseCoach
 from utils.log_utils import log_images_from_w
 from torchvision.utils import save_image
 
+
 class SingleIDCoach(BaseCoach):
 
     def __init__(self, data_loader, use_wandb):
@@ -17,7 +18,8 @@ class SingleIDCoach(BaseCoach):
 
         w_path_dir = f'{paths_config.embedding_base_dir}/{paths_config.input_data_id}'
         os.makedirs(w_path_dir, exist_ok=True)
-        os.makedirs(f'{w_path_dir}/{paths_config.pti_results_keyword}', exist_ok=True)
+        os.makedirs(
+            f'{w_path_dir}/{paths_config.pti_results_keyword}', exist_ok=True)
 
         use_ball_holder = True
 
@@ -74,9 +76,10 @@ class SingleIDCoach(BaseCoach):
                 log_images_counter += 1
 
             # save output image
-            tmp = torch.cat([real_images_batch, tmp1, generated_images], axis= 3)
-            save_image(tmp, f"{paths_config.experiments_output_dir}/{image_name}.png", normalize=True)
-
+            tmp = torch.cat(
+                [real_images_batch, tmp1, generated_images], axis=3)
+            save_image(
+                tmp, f"{paths_config.experiments_output_dir}/{image_name}.png", normalize=True)
 
             self.image_counter += 1
 
@@ -86,4 +89,4 @@ class SingleIDCoach(BaseCoach):
             snapshot_data['G_ema'] = self.G
             import pickle
             with open(f'{paths_config.checkpoints_dir}/model_{image_name}.pkl', 'wb') as f:
-                    pickle.dump(snapshot_data, f)
+                pickle.dump(snapshot_data, f)

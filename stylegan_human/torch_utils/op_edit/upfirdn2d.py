@@ -42,7 +42,8 @@ class UpFirDn2dBackward(Function):
             g_pad_y0,
             g_pad_y1,
         )
-        grad_input = grad_input.view(in_size[0], in_size[1], in_size[2], in_size[3])
+        grad_input = grad_input.view(
+            in_size[0], in_size[1], in_size[2], in_size[3])
 
         ctx.save_for_backward(kernel)
 
@@ -65,7 +66,8 @@ class UpFirDn2dBackward(Function):
     def backward(ctx, gradgrad_input):
         (kernel,) = ctx.saved_tensors
 
-        gradgrad_input = gradgrad_input.reshape(-1, ctx.in_size[2], ctx.in_size[3], 1)
+        gradgrad_input = gradgrad_input.reshape(-1,
+                                                ctx.in_size[2], ctx.in_size[3], 1)
 
         gradgrad_out = upfirdn2d_op.upfirdn2d(
             gradgrad_input,
@@ -152,7 +154,8 @@ def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
 
     else:
         out = UpFirDn2d.apply(
-            input, kernel, (up, up), (down, down), (pad[0], pad[1], pad[0], pad[1])
+            input, kernel, (up, up), (down,
+                                      down), (pad[0], pad[1], pad[0], pad[1])
         )
 
     return out
@@ -172,12 +175,13 @@ def upfirdn2d_native(
     out = out.view(-1, in_h * up_y, in_w * up_x, minor)
 
     out = F.pad(
-        out, [0, 0, max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)]
+        out, [0, 0, max(pad_x0, 0), max(pad_x1, 0),
+              max(pad_y0, 0), max(pad_y1, 0)]
     )
     out = out[
         :,
-        max(-pad_y0, 0) : out.shape[1] - max(-pad_y1, 0),
-        max(-pad_x0, 0) : out.shape[2] - max(-pad_x1, 0),
+        max(-pad_y0, 0): out.shape[1] - max(-pad_y1, 0),
+        max(-pad_x0, 0): out.shape[2] - max(-pad_x1, 0),
         :,
     ]
 
