@@ -212,7 +212,7 @@ with gr.Blocks(css=css) as app:
 
 **Due to high demand, only one model can be run at a time, or you can duplicate the space and run your own copy.**
 
-<a href="https://huggingface.co/spaces/ DragGan/DragGan-Inversion?duplicate=true" style="display: inline-block;margin-top: .5em;margin-right: .25em;" target="_blank">
+<a href="https://huggingface.co/spaces/DragGan/DragGan-Inversion?duplicate=true" style="display: inline-block;margin-top: .5em;margin-right: .25em;" target="_blank">
 <img style="margin-bottom: 0em;display: inline;margin-top: -.25em;" src="https://bit.ly/3gLdBN6" alt="Duplicate Space"></a> for no queue on your own hardware.</p>
 
 * Official Repo: [XingangPan](https://github.com/XingangPan/DragGAN)
@@ -477,7 +477,7 @@ with gr.Blocks(css=css) as app:
         inputs=[global_state],
         outputs=[global_state, form_image],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
     # Update parameters
@@ -542,7 +542,7 @@ with gr.Blocks(css=css) as app:
         inputs=[form_lr_number, global_state],
         outputs=[global_state],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
     def on_click_start(global_state, image):
@@ -778,7 +778,7 @@ with gr.Blocks(css=css) as app:
         inputs=[global_state],
         outputs=[global_state, form_stop_btn],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
     form_draw_interval_number.change(
@@ -790,7 +790,7 @@ with gr.Blocks(css=css) as app:
         inputs=[form_draw_interval_number, global_state],
         outputs=[global_state],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
     def on_click_remove_point(global_state):
@@ -874,7 +874,7 @@ with gr.Blocks(css=css) as app:
             form_image,
         ],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
     def on_click_add_point(global_state, image: dict):
@@ -906,7 +906,7 @@ with gr.Blocks(css=css) as app:
         inputs=[global_state, form_image],
         outputs=[global_state, form_image],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
     def on_click_image(global_state, evt: gr.SelectData):
@@ -946,7 +946,7 @@ with gr.Blocks(css=css) as app:
         inputs=[global_state],
         outputs=[global_state, form_image],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
     def on_click_clear_points(global_state):
@@ -971,7 +971,7 @@ with gr.Blocks(css=css) as app:
         inputs=[global_state],
         outputs=[global_state, form_image],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
     def on_click_show_mask(global_state, show_mask):
@@ -993,7 +993,7 @@ with gr.Blocks(css=css) as app:
         inputs=[global_state, show_mask],
         outputs=[global_state, form_image],
         queue=False,
-        show_progress=False,
+        show_progress=True,
     )
 
 # print("SHAReD: Start app", parser.parse_args())
