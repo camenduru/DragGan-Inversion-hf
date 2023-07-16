@@ -999,4 +999,4 @@ with gr.Blocks(css=css) as app:
 # print("SHAReD: Start app", parser.parse_args())
 gr.close_all()
 app.queue(concurrency_count=1, max_size=200, api_open=False)
-app.launch(show_api=False)
+app.launch(show_api=False, share=True)
